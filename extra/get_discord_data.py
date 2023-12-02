@@ -17,20 +17,14 @@ class Inviter(DiscordTower):
             logger.error(f"{self.account_index} | Error reading voice timings: {err}")
             return {}
 
-    def join_voice_channel(self, channel_id):
-        # Реализовать метод подключения к голосовому каналу по его ID
-        pass
-
-    def leave_voice_channel(self, channel_id):
-        # Реализовать метод отключения от голосового канала по его ID
-        pass
-
     def manage_voice_channels(self):
         voice_timings = self.get_voice_timings()
 
         for channel_id, timings in voice_timings.items():
             current_time = time.strftime('%H:%M', time.localtime())
             if current_time == timings['enter']:
+                # Подключение к голосовому каналу
                 self.join_voice_channel(channel_id)
             elif current_time == timings['exit']:
+                # Выход из голосового канала
                 self.leave_voice_channel(channel_id)
