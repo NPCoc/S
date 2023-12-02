@@ -174,3 +174,5 @@ class Inviter(DiscordTower):
         except Exception as err:
             logger.error(f"{self.account_index} | Failed to agree to the server rules: {err}")
             return False
+
+1
