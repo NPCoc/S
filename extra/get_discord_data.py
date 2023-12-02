@@ -1,73 +1,36 @@
-from urllib.parse import quote
-from loguru import logger
-import requests
+import time
 
-import extra
+class Inviter(DiscordTower):
+    # ... (весь предыдущий код)
 
+    def get_voice_timings(self):
+        try:
+            with open('voice_timings.txt', 'r') as file:
+                lines = file.readlines()
+                voice_timings = {}
+                for line in lines:
+                    channel_id, timings = line.strip().split('?')
+                    enter_time, exit_time = timings.split(':')
+                    voice_timings[channel_id] = {'enter': enter_time, 'exit': exit_time}
+                return voice_timings
+        except Exception as err:
+            logger.error(f"{self.account_index} | Error reading voice timings: {err}")
+            return {}
 
-# returns dict with message data (label, custom_id) and application_id
-def message_click_button_info(channel_id: str, message_id: str, visible_discord_token: str) -> tuple[dict, str, bool]:
-    try:
-        resp = requests.get("https://discord.com/api/v9/channels/" + channel_id + "/messages?limit=1&around=" + message_id,
-                            headers={"Authorization": visible_discord_token})
+    def join_voice_channel(self, channel_id):
+        # Реализовать метод подключения к голосовому каналу по его ID
+        pass
 
-        result, ok = choose_button_to_click(resp.json()[0]['components'])
+    def leave_voice_channel(self, channel_id):
+        # Реализовать метод отключения от голосового канала по его ID
+        pass
 
-        return result, resp.json()[0]['author']['id'], ok
+    def manage_voice_channels(self):
+        voice_timings = self.get_voice_timings()
 
-    except Exception as err:
-        logger.error(f'Failed to get message info: {err}')
-        return {}, "", False
-
-
-def choose_button_to_click(components: list) -> tuple[dict, bool]:
-    try:
-        def collect_components(element):
-            parsed_components = []
-            if isinstance(element, dict):
-                if element.get("type") == 2:
-                    parsed_components.append(element)
-                for key, value in element.items():
-                    parsed_components.extend(collect_components(value))
-            elif isinstance(element, list):
-                for item in element:
-                    parsed_components.extend(collect_components(item))
-            return parsed_components
-
-        all_components = collect_components(components)
-
-        buttons = []
-        for index, comp in enumerate(all_components, start=1):
-            buttons.append(comp['label'])
-
-        extra.show_menu(buttons)
-        button = extra.get_user_choice(buttons, "Choose the button")
-
-        for index, comp in enumerate(all_components, start=1):
-            if comp['label'] == button[0]:
-                return comp, True
-
-    except Exception as err:
-        logger.error(f"Failed to choose button to click: {err}")
-        return {}, False
-
-
-def message_reactions_emojis_info(channel_id: str, message_id: str, visible_discord_token: str) -> tuple[list, bool]:
-    try:
-        resp = requests.get(f"https://discord.com/api/v9/channels/{channel_id}/messages?limit=1&around={message_id}",
-                            headers={
-                                "Authorization": visible_discord_token
-                            })
-
-        emojis = resp.json()[0]['reactions']
-        emojis_list = [f"{emoji['emoji']['name']} | Count: {emoji['count']}" for emoji in emojis]
-
-        extra.show_menu(emojis_list)
-        emojis = extra.get_user_choice(emojis_list, "Choose the emoji")
-        emojis_names = [quote(emoji.split(" |")[0]) for emoji in emojis]
-
-        return emojis_names, True
-
-    except Exception as err:
-        logger.error(f'Failed to get emojis info: {err}')
-        return [], False
+        for channel_id, timings in voice_timings.items():
+            current_time = time.strftime('%H:%M', time.localtime())
+            if current_time == timings['enter']:
+                self.join_voice_channel(channel_id)
+            elif current_time == timings['exit']:
+                self.leave_voice_channel(channel_id)
