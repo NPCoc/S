@@ -174,3 +174,35 @@ class Inviter(DiscordTower):
         except Exception as err:
             logger.error(f"{self.account_index} | Failed to agree to the server rules: {err}")
             return False
+
+from datetime import datetime
+import time
+
+# ...
+
+    def schedule_voice_channel_actions(self, file_path: str):
+        with open(file_path, 'r') as file:
+            lines = file.readlines()
+
+            for line in lines:
+                channel_id, entry_time, exit_time = line.strip().split('?')
+                entry_hour, entry_minute = map(int, entry_time.split(':'))
+                exit_hour, exit_minute = map(int, exit_time.split(':'))
+
+                while True:
+                    current_time = datetime.now().time()
+                    if (current_time.hour == entry_hour and current_time.minute == entry_minute):
+                        self.join_voice_channel(channel_id)
+                    elif (current_time.hour == exit_hour and current_time.minute == exit_minute):
+                        self.leave_voice_channel(channel_id)
+                        break
+                    time.sleep(60)  # Проверяем каждую минуту
+
+    def join_voice_channel(self, channel_id: str):
+        # Код для присоединения к голосовому каналу с использованием API Discord
+        pass
+
+    def leave_voice_channel(self, channel_id: str):
+        # Код для выхода из голосового канала с использованием API Discord
+        pass
+
